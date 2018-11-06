@@ -1,0 +1,6 @@
+*.h
+*.o
+*.DS_Store
+*.swp
+env
+Session.vim
