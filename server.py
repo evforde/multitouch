@@ -45,8 +45,7 @@ async def publish_serial(websocket, path):
             if len(buf) > 5 and buf[-5:] == ["h", "e", "l", "l", "o"]:
                 hello = buf[-5:]
                 readings = buf[:-5]
-                readings_str = json.dumps([ord(c) for c in readings])
-                message = f"{readings_str}"
+                message = json.dumps([ord(c) for c in readings])
                 await websocket.send(message)
                 buf = []
 

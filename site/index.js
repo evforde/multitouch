@@ -23,6 +23,9 @@ var READING_IDX_TO_CELL = [
 var DEFAULT_VALUES = [
   24, 26, 24, 26, 23, 24, 24, 25, 23, 25, 25, 25, 24, 14, 25, 25];
 
+var MAX_DIFFERENCE = 8;
+var MIN_OPACITY = 0.2;
+
 ws.onopen = function () {
   ws.send("This is the browser!");
 };
@@ -38,7 +41,8 @@ ws.onmessage = function (e) {
     let row = cell[0];
     let column = cell[1];
     let difference = DEFAULT_VALUES[i] - readings[i];
-    let opacity = difference / DEFAULT_VALUES[i] + 0.2;
+    let opacity = Math.max(difference / MAX_DIFFERENCE, 0) + MIN_OPACITY;
+    opacity = Math.min(opacity, 1);
     let selector = ".row:nth(" + row + ") .cell:nth(" + column +")";
     $(selector).css("opacity", opacity);
     $(selector).css("transform", "translateZ(" + opacity * 100 + "px)");
