@@ -46,6 +46,7 @@ async def publish_serial(websocket, path):
                 hello = buf[-5:]
                 readings = buf[:-5]
                 message = json.dumps([ord(c) for c in readings])
+                print(message)
                 await websocket.send(message)
                 buf = []
 

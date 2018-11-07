@@ -21,7 +21,7 @@ var READING_IDX_TO_CELL = [
 ]
 
 var DEFAULT_VALUES = [
-  24, 26, 24, 26, 23, 24, 24, 25, 23, 25, 25, 25, 24, 14, 25, 25];
+  24, 25, 24, 26, 23, 24, 24, 25, 23, 25, 25, 25, 24, 26, 25, 25]
 
 var MAX_DIFFERENCE = 8;
 var MIN_OPACITY = 0.2;

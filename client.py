@@ -1,7 +1,6 @@
-
 #!/usr/bin/env python
 
-# WS client example
+# WS client example - this is purely for testing
 
 import asyncio
 import websockets
