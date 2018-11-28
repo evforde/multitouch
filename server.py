@@ -51,6 +51,7 @@ async def publish_serial(websocket, path):
                 buf = []
 
 
+print(f"Waiting to connect... open site/index.html!")
 asyncio.get_event_loop().run_until_complete(
     websockets.serve(publish_serial, "localhost", 8765))
 asyncio.get_event_loop().run_forever()

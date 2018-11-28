@@ -1,5 +1,7 @@
 *.o
 *.ob
+*.obj
+*.hex
 *.DS_Store
 *.swp
 env
