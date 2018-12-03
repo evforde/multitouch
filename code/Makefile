@@ -5,8 +5,8 @@ OUT=$(PROJECT).obj
 SOURCES=multitouch.c serial.c
 OBJECTS=$(SOURCES:.c=.o)
 
-MMCU=atmega328p
-F_CPU = 16000000
+MMCU=attiny44
+F_CPU = 20000000
 CC=avr-gcc
 
 CFLAGS=-mmcu=$(MMCU) -Wall -Os -DF_CPU=$(F_CPU)
@@ -35,13 +35,13 @@ fuse: fuse-usbtiny
 programmed: $(HEX)
 
 program-avrisp2: $(HEX)
-	avrdude -p atmega328p -P usb -c avrisp2 -U flash:w:$(HEX)
+	avrdude -p $(MMCU) -P usb -c avrisp2 -U flash:w:$(HEX)
 
 fuse-avrisp2:
-	avrdude -p atmega328p -P usb -c avrisp2 -U lfuse:w:0x7E:m
+	avrdude -p $(MMCU) -P usb -c avrisp2 -U lfuse:w:0x5E:m
 
 program-usbtiny: $(HEX)
-	avrdude -p atmega328p -P usb -c usbtiny -U flash:w:$(HEX)
+	avrdude -p $(MMCU) -P usb -c usbtiny -U flash:w:$(HEX)
 
 fuse-usbtiny:
-	avrdude -p atmega328p -P usb -c usbtiny -U lfuse:w:0x7E:m
+	avrdude -p $(MMCU) -P usb -c usbtiny -U lfuse:w:0x5E:m

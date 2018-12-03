@@ -8,10 +8,10 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
-#define serial_port PORTD
-#define serial_direction DDRD
-#define serial_pins PIND
-#define serial_pin_out (1 << PD1)
+#define serial_port PORTA
+#define serial_direction DDRA
+#define serial_pins PINA
+#define serial_pin_out (1 << PA0)
 
 #include <avr/pgmspace.h>
 
