@@ -12,7 +12,7 @@ SOURCES_RECEIVER=receiver.c serial.c
 OBJECTS_RECEIVER=$(SOURCES_RECEIVER:.c=.o)
 
 MMCU=attiny44
-F_CPU = 20000000
+F_CPU=20000000
 CC=avr-gcc
 
 CFLAGS=-mmcu=$(MMCU) -Wall -Os -DF_CPU=$(F_CPU)
@@ -33,6 +33,7 @@ $(OUT_RECEIVER): $(OBJECTS_RECEIVER)
 
 # Dependency tree:
 multitouch.c: serial.h macros.h
+receiver.c: serial.h macros.h
 serial.o: serial.c serial.h
 
 clean:
@@ -42,12 +43,14 @@ clean:
 program: programmed program-usbtiny
 	touch programmed
 
-program-receiver: programmed program-usbtiny-receiver
+program-receiver: programmed-receiver program-usbtiny-receiver
 	touch programmed
 
 fuse: fuse-usbtiny
 
 programmed: $(HEX)
+
+programmed-receiver: $(HEX_RECEIVER)
 
 program-avrisp2: $(HEX)
 	avrdude -p $(MMCU) -P usb -c avrisp2 -U flash:w:$(HEX)

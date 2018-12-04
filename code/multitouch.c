@@ -65,7 +65,6 @@ int main(void)
     serial_init(serial_pin_out);
     output(DDRA, PIN_LED);
     set(PORTA, PIN_LED);
-    clear(PORTA, PIN_LED);
     
     static unsigned char send_pins[3] = {PA3, PA2, PA1};
     
@@ -74,6 +73,10 @@ int main(void)
     
     // for some reason, all outputs only show up when shooting out of PA3
     while(1) {
+        clear(PORTA, PIN_LED);
+        _delay_ms(200);
+        set(PORTA, PIN_LED);
+        _delay_ms(200);
         continue;
         put_char(&serial_port, serial_pin_out, 'h');
         put_char(&serial_port, serial_pin_out, 'e');
