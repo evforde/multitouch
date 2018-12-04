@@ -3,24 +3,15 @@
 #include <util/delay.h>
 #include <avr/pgmspace.h>
 
-//#include "serial.h"
+#include "serial.h"
 #include "macros.h"
 
+#define serial_pin_out (1 << PA5)
 #define PIN_LED PA7
+#define ADDRESS 1
 #define TIMEOUT_TIME 5000
 
-void blink2(void) {
-    set(PORTA, PIN_LED);
-    _delay_ms(200);
-    clear(PORTA, PIN_LED);
-    _delay_ms(200);
-    set(PORTA, PIN_LED);
-    _delay_ms(200);
-    clear(PORTA, PIN_LED);
-    _delay_ms(200);
-}
-
-void scan_pad(
+uint8_t scan_pad(
         volatile unsigned char* sendport,
         volatile unsigned char* sendddr,
         unsigned char sendpin,
@@ -49,19 +40,15 @@ void scan_pad(
     clear(PRR, PRADC);
     set(ADCSRA, ADSC);
     while (ADCSRA & (1 << ADSC));
-    //put_char(&serial_port, serial_pin_out, ADCH);
-    if (ADCL < 247) {
-        set(PORTA, PIN_LED);
-    }
-    else {
-    }
+    put_char(&serial_port, serial_pin_out, ADCH);
     
     clear(*sendport, sendpin);
     clear(*sendddr, sendpin);
 
     // Make receive pins outputs to quickly bleed off charge.
     set(DDRA, PA0);
-    _delay_ms(1);
+    return ADCH < 10;
+    // _delay_us(1);
 }
 
 int main(void)
@@ -72,12 +59,13 @@ int main(void)
 
     // ADC enabled, flag cleared, prescalar set to 128 (125 kHz)
     ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-    // ADCSRB |= (1 << ADLAR);
+    ADCSRB |= (1 << ADLAR);
 
     // Initialize various special features
-    serial_init();
+    serial_init(serial_pin_out);
     output(DDRA, PIN_LED);
     set(PORTA, PIN_LED);
+    clear(PORTA, PIN_LED);
     
     static unsigned char send_pins[3] = {PA3, PA2, PA1};
     
@@ -86,18 +74,21 @@ int main(void)
     
     // for some reason, all outputs only show up when shooting out of PA3
     while(1) {
-        /*put_char(&serial_port, serial_pin_out, 'h');
+        continue;
+        put_char(&serial_port, serial_pin_out, 'h');
         put_char(&serial_port, serial_pin_out, 'e');
         put_char(&serial_port, serial_pin_out, 'l');
         put_char(&serial_port, serial_pin_out, 'l');
-        put_char(&serial_port, serial_pin_out, 'o');*/
-        blink2();
-        scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
-        _delay_ms(400);
-        /*int i = 0;
-        for (i = 0; i < 3; i++) {
-        }*/
-        // _delay_ms(12.1);
-        // _delay_ms(3.76);
+        put_char(&serial_port, serial_pin_out, 'o');
+        put_char(&serial_port, serial_pin_out, ADDRESS);
+        uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
+        uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
+        uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
+        if (pressed1 || pressed2 || pressed3) {
+            set(PORTA, PIN_LED);
+        }
+        else {
+            clear(PORTA, PIN_LED);
+        }
     }
 }

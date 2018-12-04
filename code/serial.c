@@ -24,7 +24,9 @@
 #define half_bit_delay() _delay_us(bit_delay_time/2) // RS232 half bit delay
 #define char_delay() _delay_ms(10) // char delay
 
-void serial_init(void)
+#define max_buffer 25
+
+void serial_init(unsigned char serial_pin_out)
 {
    //
    // initialize output pins
@@ -96,6 +98,61 @@ void put_char(volatile unsigned char *port, unsigned char pin, char txchar) {
    bit_delay();
 
    }
+
+void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
+   // read character into rxbyte on pins pin
+   //    assumes line driver (inverts bits)
+   *rxbyte = 0;
+   while (bit_test(*pins,pin))
+      // wait for start bit
+      ;
+   // delay to middle of first data bit
+   half_bit_delay();
+   bit_delay();
+   // unrolled loop to read data bits
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 0);
+   else
+      *rxbyte |= (0 << 0);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 1);
+   else
+      *rxbyte |= (0 << 1);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 2);
+   else
+      *rxbyte |= (0 << 2);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 3);
+   else
+      *rxbyte |= (0 << 3);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 4);
+   else
+      *rxbyte |= (0 << 4);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 5);
+   else
+      *rxbyte |= (0 << 5);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 6);
+   else
+      *rxbyte |= (0 << 6);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 7);
+   else
+      *rxbyte |= (0 << 7);
+   // wait for stop bit
+   bit_delay();
+   half_bit_delay();
+}
 
 void put_int(volatile unsigned char *port, unsigned char pin, int x) {
 
