@@ -11,6 +11,11 @@
 #define serial_port PORTA
 #define serial_direction DDRA
 #define serial_pins PINA
+
+#define MISO PA5
+#define MISO_SFT (1 << MISO)
+#define MOSI PA6
+#define MOSI_SFT (1 << MOSI)
 // TODO
 
 #include <avr/pgmspace.h>
