@@ -19,8 +19,7 @@ unsigned char scan_pad(
         volatile unsigned char* sendport,
         volatile unsigned char* sendddr,
         unsigned char sendpin,
-        unsigned char muxval,
-        unsigned char *val) {
+        unsigned char muxval) {
     // unsigned char sendpin = send_pins[index];
     // Wait for the receive pin to settle
     ADMUX = muxval;
