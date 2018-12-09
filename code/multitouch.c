@@ -11,15 +11,16 @@
 #define TIMEOUT_TIME 5000
 
 static unsigned char send_pins[3] = {PA3, PA2, PA1};
-static unsigned char val = 0;
+static unsigned char vals[3] = {0};
 // specify which pin to use as the ADC
 static unsigned char receive_muxes[1] = {0b00000000};
 
-uint8_t scan_pad(
+unsigned char scan_pad(
         volatile unsigned char* sendport,
         volatile unsigned char* sendddr,
         unsigned char sendpin,
-        unsigned char muxval) {
+        unsigned char muxval,
+        unsigned char *val) {
     // unsigned char sendpin = send_pins[index];
     // Wait for the receive pin to settle
     ADMUX = muxval;
@@ -45,16 +46,15 @@ uint8_t scan_pad(
     clear(PRR, PRADC);
     set(ADCSRA, ADSC);
     while (ADCSRA & (1 << ADSC));
-    val = ADCH;
-    //put_char(&serial_port, MISO, 'h');
+    unsigned char is_pressed = ADCH < 15;
+    put_char(&serial_port, MISO_SFT, is_pressed);
     
     clear(*sendport, sendpin);
     clear(*sendddr, sendpin);
 
     // Make receive pins outputs to quickly bleed off charge.
     set(DDRA, PA0);
-    return ADCH < 15;
-    // _delay_us(1);
+    return is_pressed;
 }
 
 int main(void)
@@ -74,43 +74,19 @@ int main(void)
     output(DDRA, MISO);
     
     while(1) {
-        if bit_test(PINA, MOSI) {
-            set(PORTA, MISO);
-            set(PORTA, PIN_LED);
-        }
-        else {
-            clear(PORTA, MISO);
-            clear(PORTA, PIN_LED);
-        }
-        continue;
-        // put_char(&serial_port, MISO_SFT, 'h');
-        // put_char(&serial_port, MISO_SFT, 'e');
-        // put_char(&serial_port, MISO_SFT, 'l');
-        // put_char(&serial_port, MISO_SFT, 'l');
-        // put_char(&serial_port, MISO_SFT, 'o');
-        // put_char(&serial_port, MISO_SFT, ADDRESS);
+        put_char(&serial_port, MISO_SFT, 'h');
+        put_char(&serial_port, MISO_SFT, 'e');
+        put_char(&serial_port, MISO_SFT, 'l');
+        put_char(&serial_port, MISO_SFT, 'l');
+        put_char(&serial_port, MISO_SFT, 'o');
+        put_char(&serial_port, MISO_SFT, ADDRESS);
         uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
-        // uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
-        // uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
-        if (pressed1){ // || pressed2 || pressed3) {
+        uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
+        uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
+        if (pressed1 || pressed2 || pressed3)
             set(PORTA, PIN_LED);
-            set(PORTA, MISO);
-            _delay_ms(200);
+        else
             clear(PORTA, PIN_LED);
-            clear(PORTA, MISO);
-            _delay_ms(200);
-            set(PORTA, PIN_LED);
-            set(PORTA, MISO);
-            _delay_ms(200);
-            clear(PORTA, PIN_LED);
-            clear(PORTA, MISO);
-            _delay_ms(200);
-            set(PORTA, PIN_LED);
-            set(PORTA, MISO);
-            _delay_ms(200);
-            clear(PORTA, PIN_LED);
-            clear(PORTA, MISO);
-        }
         continue;
         static char chr;
         get_char(&serial_pins, MOSI, &chr);

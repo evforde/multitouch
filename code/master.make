@@ -2,7 +2,6 @@ PROJECT=receiver
 HEX=$(PROJECT).hex
 OUT=$(PROJECT).obj
 
-
 SOURCES=receiver.c serial.c
 OBJECTS=$(SOURCES:.c=.o)
 

@@ -19,7 +19,7 @@
 #define output(directions,pin) (directions |= pin) // set port direction for output
 #define bit_test(byte,bit) (byte & (1 << bit)) // test for bit set
 
-#define bit_delay_time 8.5 // bit delay for 115200 with overhead
+#define bit_delay_time 49.5 // bit delay for 19200 with overhead
 #define bit_delay() _delay_us(bit_delay_time) // RS232 bit delay
 #define half_bit_delay() _delay_us(bit_delay_time/2) // RS232 half bit delay
 #define char_delay() _delay_ms(10) // char delay
@@ -35,18 +35,13 @@ void serial_init(unsigned char serial_pin_out)
    output(serial_direction, serial_pin_out);
 }
 
-void put_char(volatile unsigned char *port, unsigned char pin, char txchar) {
-   //
+void put_char_no_delay(volatile unsigned char *port, unsigned char pin, char txchar) {
    // send character in txchar on port pin
    //    assumes line driver (inverts bits)
-   //
    // start bit
-   //
    clear(*port,pin);
    bit_delay();
-   //
    // unrolled loop to write data bits
-   //
    if bit_test(txchar,0)
       set(*port,pin);
    else
@@ -87,17 +82,16 @@ void put_char(volatile unsigned char *port, unsigned char pin, char txchar) {
    else
       clear(*port,pin);
    bit_delay();
-   //
    // stop bit
-   //
    set(*port,pin);
    bit_delay();
-   //
-   // char delay
-   //
-   bit_delay();
+   // no delay
+}
 
-   }
+void put_char(volatile unsigned char *port, unsigned char pin, char txchar) {
+    put_char_no_delay(port, pin, txchar);
+    char_delay();
+}
 
 void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
    // read character into rxbyte on pins pin
@@ -113,42 +107,42 @@ void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 0);
    else
-      *rxbyte |= (0 << 0);
+      *rxbyte &= ~(1 << 0);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 1);
    else
-      *rxbyte |= (0 << 1);
+      *rxbyte &= ~(1 << 1);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 2);
    else
-      *rxbyte |= (0 << 2);
+      *rxbyte &= ~(1 << 2);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 3);
    else
-      *rxbyte |= (0 << 3);
+      *rxbyte &= ~(1 << 3);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 4);
    else
-      *rxbyte |= (0 << 4);
+      *rxbyte &= ~(1 << 4);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 5);
    else
-      *rxbyte |= (0 << 5);
+      *rxbyte &= ~(1 << 5);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 6);
    else
-      *rxbyte |= (0 << 6);
+      *rxbyte &= ~(1 << 6);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 7);
    else
-      *rxbyte |= (0 << 7);
+      *rxbyte &= ~(1 << 7);
    // wait for stop bit
    bit_delay();
    half_bit_delay();
