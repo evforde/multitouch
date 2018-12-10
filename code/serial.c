@@ -148,6 +148,61 @@ void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
    half_bit_delay();
 }
 
+void get_char_interrupt(volatile unsigned char *pins, unsigned char pin, char* rxbyte, unsigned char* interrupt) {
+   // read character into rxbyte on pins pin
+   //    assumes line driver (inverts bits)
+   *rxbyte = 0;
+   while (bit_test(*pins,pin) && *interrupt)
+      // wait for start bit
+      ;
+   // delay to middle of first data bit
+   half_bit_delay();
+   bit_delay();
+   // unrolled loop to read data bits
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 0);
+   else
+      *rxbyte &= ~(1 << 0);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 1);
+   else
+      *rxbyte &= ~(1 << 1);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 2);
+   else
+      *rxbyte &= ~(1 << 2);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 3);
+   else
+      *rxbyte &= ~(1 << 3);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 4);
+   else
+      *rxbyte &= ~(1 << 4);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 5);
+   else
+      *rxbyte &= ~(1 << 5);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 6);
+   else
+      *rxbyte &= ~(1 << 6);
+   bit_delay();
+   if bit_test(*pins,pin)
+      *rxbyte |= (1 << 7);
+   else
+      *rxbyte &= ~(1 << 7);
+   // wait for stop bit
+   bit_delay();
+   half_bit_delay();
+}
+
 void put_int(volatile unsigned char *port, unsigned char pin, int x) {
 
     if (x == 0) {

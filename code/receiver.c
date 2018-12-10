@@ -16,11 +16,50 @@
 
 static unsigned char led_pins[3] = {PA3, PA2, PA1};
 
-ISR(PCINT0_vect) {
+void setup_leds(void) {
+    output(DDRA, PIN_LED);
+    set(PORTA, PIN_LED);
+    output(DDRA, led_pins[0]);
+    output(DDRA, led_pins[1]);
+    output(DDRA, led_pins[2]);
+}
+
+static unsigned char is_reading = 0;
+void setup_timer(void) {
+    // 16-bit counter with top=0xffff
+    TIMSK1 |= (1 << OCIE1A); // Set the interrupt handler
+    sei();
+}
+
+void start_timer(void) {
+    is_reading = 1;
+    // TODO decrease prescaler
+    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 1024 prescaler
+}
+
+void stop_timer(void) {
+    is_reading = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;
+}
+
+ISR(TIM1_COMPA_vect) {
+    set(PORTA, led_pins[0]);
+    _delay_ms(10);
+    clear(PORTA, led_pins[0]);
+    stop_timer();
+}
+
+void setup_interrupts(void) {
+    // GIMSK |= 1 << PCIE0;
+    // PCMSK0 |= 1 << MISO;
+}
+
+void read_from_board(void) {
     static char chr;
     static char buffer[MAX_BUFFER] = {0};
     static int index = 0;
-    get_char(&serial_pins, MISO, &chr);
+    get_char_interrupt(&serial_pins, MISO, &chr, &is_reading);
     put_char_no_delay(&serial_port, serial_pin_out_sft, chr);
     if (chr == 'h' || index == MAX_BUFFER) {
         index = 0;
@@ -41,6 +80,8 @@ ISR(PCINT0_vect) {
             set(PORTA, led_pins[2]);
         else
             clear(PORTA, led_pins[2]);
+        // read from the next board
+        stop_timer();
     }
 }
 
@@ -52,21 +93,26 @@ int main(void)
 
     // Initialize various special features
     serial_init(serial_pin_out_sft);
-    output(DDRA, PIN_LED);
-    set(PORTA, PIN_LED);
-    output(DDRA, led_pins[0]);
-    output(DDRA, led_pins[1]);
-    output(DDRA, led_pins[2]);
-    // set(PORTA, led_pins[0]);
-    //clear(PORTA, PIN_LED);
     output(DDRA, MOSI);
-    GIMSK |= 1 << PCIE0;
-    PCMSK0 |= 1 << MISO;
-    sei();
+
+    setup_leds();
+    setup_timer();
     
     put_char(&serial_port, serial_pin_out_sft, 'h');
     while(1) {
+        // tell somebody to talk
+        put_char(&serial_port, MOSI_SFT, 'a');
+        // show we're waiting
+        set(PORTA, PIN_LED);
+        start_timer();
+        // wait for board reading
+        while (is_reading) {
+            read_from_board();
+        }
+        clear(PORTA, PIN_LED);
+        _delay_ms(10);
         continue;
+
         // read and echo bits
         if bit_test(PINA, MISO)
             set(PORTA, serial_pin_out);

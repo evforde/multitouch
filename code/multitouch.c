@@ -7,7 +7,7 @@
 #include "macros.h"
 
 #define PIN_LED PA7
-#define ADDRESS 1
+#define ADDRESS 'a'
 #define TIMEOUT_TIME 5000
 
 static unsigned char send_pins[3] = {PA3, PA2, PA1};
@@ -56,6 +56,12 @@ unsigned char scan_pad(
     return is_pressed;
 }
 
+static char chr;
+ISR(PCINT0_vect) {
+    get_char(&serial_pins, MOSI, &chr);
+    set(PORTA, PIN_LED);
+}
+
 int main(void)
 {
     // set clock divider to /1
@@ -72,21 +78,42 @@ int main(void)
     set(PORTA, PIN_LED);
     output(DDRA, MISO);
     
+    // set interrupt for MOSI
+    GIMSK |= 1 << PCIE0;
+    PCMSK0 |= 1 << MOSI;
+    //sei();
+    
     while(1) {
-        put_char(&serial_port, MISO_SFT, 'h');
-        put_char(&serial_port, MISO_SFT, 'e');
-        put_char(&serial_port, MISO_SFT, 'l');
-        put_char(&serial_port, MISO_SFT, 'l');
-        put_char(&serial_port, MISO_SFT, 'o');
-        put_char(&serial_port, MISO_SFT, ADDRESS);
-        uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
-        uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
-        uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
-        if (pressed1 || pressed2 || pressed3)
-            set(PORTA, PIN_LED);
+        get_char(&serial_pins, MOSI, &chr);
+        if (chr == ADDRESS) {
+            // If we hear our name, it's our turn to talk back
+            // Sometimes, the h goes back too fast, so delay for a little bit
+            _delay_ms(10);
+            put_char(&serial_port, MISO_SFT, 'h');
+            put_char(&serial_port, MISO_SFT, 'e');
+            put_char(&serial_port, MISO_SFT, 'l');
+            put_char(&serial_port, MISO_SFT, 'l');
+            put_char(&serial_port, MISO_SFT, 'o');
+            put_char(&serial_port, MISO_SFT, ADDRESS);
+            uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
+            uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
+            uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
+            if (pressed1 || pressed2 || pressed3) {
+                set(PORTA, PIN_LED);
+                _delay_ms(200);
+                clear(PORTA, PIN_LED);
+            }
+            else
+                clear(PORTA, PIN_LED);
+        }
         else
             clear(PORTA, PIN_LED);
         continue;
+        /* if (pressed1 || pressed2 || pressed3)
+            set(PORTA, PIN_LED);
+        else
+            clear(PORTA, PIN_LED);
+        */
         static char chr;
         get_char(&serial_pins, MOSI, &chr);
         if (chr == 0xee) {
