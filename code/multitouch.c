@@ -8,6 +8,7 @@
 
 #define PIN_LED PA7
 #define ADDRESS 'a'
+//#define ADDRESS 'b'
 #define TIMEOUT_TIME 5000
 
 static unsigned char send_pins[3] = {PA3, PA2, PA1};
@@ -56,10 +57,29 @@ unsigned char scan_pad(
     return is_pressed;
 }
 
-static char chr;
-ISR(PCINT0_vect) {
-    get_char(&serial_pins, MOSI, &chr);
-    set(PORTA, PIN_LED);
+void read_touchpads(void) {
+    // connect to MISO
+    set(PORTA, MISO);
+    set(DDRA, MISO);
+    // read from the touchpads
+    // Sometimes, the h goes back too fast, so delay for a little bit
+    _delay_ms(10);
+    put_char(&serial_port, MISO_SFT, 'h');
+    put_char(&serial_port, MISO_SFT, 'e');
+    put_char(&serial_port, MISO_SFT, 'l');
+    put_char(&serial_port, MISO_SFT, 'l');
+    put_char(&serial_port, MISO_SFT, 'o');
+    put_char(&serial_port, MISO_SFT, ADDRESS);
+    uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
+    uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
+    uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
+    if (pressed1 || pressed2 || pressed3) {
+        set(PORTA, PIN_LED);
+    }
+    else
+        clear(PORTA, PIN_LED);
+    // disconnect from MISO
+    clear(DDRA, MISO);
 }
 
 int main(void)
@@ -72,59 +92,16 @@ int main(void)
     ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
     ADCSRB |= (1 << ADLAR);
 
-    // Initialize various special features
-    serial_init(MISO_SFT);
     output(DDRA, PIN_LED);
     set(PORTA, PIN_LED);
     output(DDRA, MISO);
     
-    // set interrupt for MOSI
-    GIMSK |= 1 << PCIE0;
-    PCMSK0 |= 1 << MOSI;
-    //sei();
-    
     while(1) {
-        get_char(&serial_pins, MOSI, &chr);
-        if (chr == ADDRESS) {
-            // If we hear our name, it's our turn to talk back
-            // Sometimes, the h goes back too fast, so delay for a little bit
-            _delay_ms(10);
-            put_char(&serial_port, MISO_SFT, 'h');
-            put_char(&serial_port, MISO_SFT, 'e');
-            put_char(&serial_port, MISO_SFT, 'l');
-            put_char(&serial_port, MISO_SFT, 'l');
-            put_char(&serial_port, MISO_SFT, 'o');
-            put_char(&serial_port, MISO_SFT, ADDRESS);
-            uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
-            uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
-            uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
-            if (pressed1 || pressed2 || pressed3) {
-                set(PORTA, PIN_LED);
-                _delay_ms(200);
-                clear(PORTA, PIN_LED);
-            }
-            else
-                clear(PORTA, PIN_LED);
-        }
-        else
-            clear(PORTA, PIN_LED);
-        continue;
-        /* if (pressed1 || pressed2 || pressed3)
-            set(PORTA, PIN_LED);
-        else
-            clear(PORTA, PIN_LED);
-        */
         static char chr;
         get_char(&serial_pins, MOSI, &chr);
-        if (chr == 0xee) {
-            serial_direction |= MISO_SFT;
-            // static const char message[] PROGMEM = "node ";
-            // put_string(&serial_port, MISO_SFT, (PGM_P) message);
-            put_char(&serial_port, MISO_SFT, chr);
-            put_char(&serial_port, MISO_SFT, 0xdd); // new line
-            serial_direction &= ~MISO_SFT;
-            set(PORTA, PIN_LED);
+        if (chr == ADDRESS) {
+            // If we hear our name, it's our turn to talk back to the master.
+            read_touchpads();
         }
-        else clear(PORTA, PIN_LED);
     }
 }

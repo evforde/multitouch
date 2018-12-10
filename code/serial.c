@@ -148,6 +148,7 @@ void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
    half_bit_delay();
 }
 
+// TODO
 void get_char_interrupt(volatile unsigned char *pins, unsigned char pin, char* rxbyte, unsigned char* interrupt) {
    // read character into rxbyte on pins pin
    //    assumes line driver (inverts bits)

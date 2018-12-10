@@ -14,7 +14,15 @@
 
 #define MAX_BUFFER 9
 
+#define NUM_SLAVES 2
+static char slave_addresses[NUM_SLAVES] = {'a', 'b'};
+static uint8_t slave_index = 0;
+
 static unsigned char led_pins[3] = {PA3, PA2, PA1};
+
+// ----------------------------------------------------------------------------
+// LEDS
+// ----------------------------------------------------------------------------
 
 void setup_leds(void) {
     output(DDRA, PIN_LED);
@@ -23,6 +31,10 @@ void setup_leds(void) {
     output(DDRA, led_pins[1]);
     output(DDRA, led_pins[2]);
 }
+
+// ----------------------------------------------------------------------------
+// TIMER
+// ----------------------------------------------------------------------------
 
 static unsigned char is_reading = 0;
 void setup_timer(void) {
@@ -50,10 +62,9 @@ ISR(TIM1_COMPA_vect) {
     stop_timer();
 }
 
-void setup_interrupts(void) {
-    // GIMSK |= 1 << PCIE0;
-    // PCMSK0 |= 1 << MISO;
-}
+// ----------------------------------------------------------------------------
+// SERIAL COMMUNICATION
+// ----------------------------------------------------------------------------
 
 void read_from_board(void) {
     static char chr;
@@ -61,6 +72,7 @@ void read_from_board(void) {
     static int index = 0;
     get_char_interrupt(&serial_pins, MISO, &chr, &is_reading);
     put_char_no_delay(&serial_port, serial_pin_out_sft, chr);
+    // Set up framing so 'h' is always first character
     if (chr == 'h' || index == MAX_BUFFER) {
         index = 0;
     }
@@ -85,6 +97,10 @@ void read_from_board(void) {
     }
 }
 
+// ----------------------------------------------------------------------------
+// MAIN CODE
+// ----------------------------------------------------------------------------
+
 int main(void)
 {
     // set clock divider to /1
@@ -94,14 +110,21 @@ int main(void)
     // Initialize various special features
     serial_init(serial_pin_out_sft);
     output(DDRA, MOSI);
-
     setup_leds();
     setup_timer();
     
     put_char(&serial_port, serial_pin_out_sft, 'h');
     while(1) {
         // tell somebody to talk
-        put_char(&serial_port, MOSI_SFT, 'a');
+        // stupid C problems where real indexing doesn't work...
+        switch (slave_index) {
+            case 0:
+                put_char(&serial_port, MOSI_SFT, slave_addresses[0]);
+                break;
+            case 1:
+                put_char(&serial_port, MOSI_SFT, slave_addresses[1]);
+                break;
+        }
         // show we're waiting
         set(PORTA, PIN_LED);
         start_timer();
@@ -110,13 +133,8 @@ int main(void)
             read_from_board();
         }
         clear(PORTA, PIN_LED);
+        slave_index++;
+        slave_index = slave_index % NUM_SLAVES;
         _delay_ms(10);
-        continue;
-
-        // read and echo bits
-        if bit_test(PINA, MISO)
-            set(PORTA, serial_pin_out);
-        else
-            clear(PORTA, serial_pin_out);
     }
 }
