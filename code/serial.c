@@ -107,42 +107,42 @@ void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 0);
    else
-      *rxbyte &= ~(1 << 0);
+      *rxbyte |= (0 << 0);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 1);
    else
-      *rxbyte &= ~(1 << 1);
+      *rxbyte |= (0 << 1);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 2);
    else
-      *rxbyte &= ~(1 << 2);
+      *rxbyte |= (0 << 2);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 3);
    else
-      *rxbyte &= ~(1 << 3);
+      *rxbyte |= (0 << 3);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 4);
    else
-      *rxbyte &= ~(1 << 4);
+      *rxbyte |= (0 << 4);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 5);
    else
-      *rxbyte &= ~(1 << 5);
+      *rxbyte |= (0 << 5);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 6);
    else
-      *rxbyte &= ~(1 << 6);
+      *rxbyte |= (0 << 6);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 7);
    else
-      *rxbyte &= ~(1 << 7);
+      *rxbyte |= (0 << 7);
    // wait for stop bit
    bit_delay();
    half_bit_delay();
@@ -163,42 +163,42 @@ void get_char_interrupt(volatile unsigned char *pins, unsigned char pin, char* r
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 0);
    else
-      *rxbyte &= ~(1 << 0);
+      *rxbyte |= (0 << 0);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 1);
    else
-      *rxbyte &= ~(1 << 1);
+      *rxbyte |= (0 << 1);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 2);
    else
-      *rxbyte &= ~(1 << 2);
+      *rxbyte |= (0 << 2);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 3);
    else
-      *rxbyte &= ~(1 << 3);
+      *rxbyte |= (0 << 3);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 4);
    else
-      *rxbyte &= ~(1 << 4);
+      *rxbyte |= (0 << 4);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 5);
    else
-      *rxbyte &= ~(1 << 5);
+      *rxbyte |= (0 << 5);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 6);
    else
-      *rxbyte &= ~(1 << 6);
+      *rxbyte |= (0 << 6);
    bit_delay();
    if bit_test(*pins,pin)
       *rxbyte |= (1 << 7);
    else
-      *rxbyte &= ~(1 << 7);
+      *rxbyte |= (0 << 7);
    // wait for stop bit
    bit_delay();
    half_bit_delay();
