@@ -6,16 +6,17 @@
 #include "serial.h"
 #include "macros.h"
 
-#define PIN_LED PA7
-#define ADDRESS 'a'
-//#define ADDRESS 'b'
+#define PIN_LED PA4
+//#define ADDRESS 'a'
+#define ADDRESS 'b'
 #define TIMEOUT_TIME 5000
 
-static unsigned char send_pins[3] = {PA3, PA2, PA1};
+static unsigned char send_pins[3] = {PB2, PA7};
 static unsigned char vals[3] = {0};
 // specify which pin to use as the ADC
-static unsigned char receive_muxes[1] = {0b00000000};
+static unsigned char receive_muxes[1] = {0b00000000, 0b00000001, 0b00000010, 0b00000011};
 
+// TODO use MOSI interrupts so we always have updated touchpad readings
 unsigned char scan_pad(
         volatile unsigned char* sendport,
         volatile unsigned char* sendddr,
@@ -46,7 +47,7 @@ unsigned char scan_pad(
     clear(PRR, PRADC);
     set(ADCSRA, ADSC);
     while (ADCSRA & (1 << ADSC));
-    unsigned char is_pressed = ADCH < 15;
+    unsigned char is_pressed = ADCH < 6;
     put_char(&serial_port, MISO_SFT, is_pressed);
     
     clear(*sendport, sendpin);
@@ -66,16 +67,18 @@ void read_touchpads(void) {
     _delay_ms(10);
     put_char(&serial_port, MISO_SFT, 'h');
     put_char(&serial_port, MISO_SFT, 'e');
-    put_char(&serial_port, MISO_SFT, 'l');
-    put_char(&serial_port, MISO_SFT, 'l');
-    put_char(&serial_port, MISO_SFT, 'o');
-    put_char(&serial_port, MISO_SFT, ADDRESS);
-    uint8_t pressed1 = scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
-    uint8_t pressed2 = scan_pad(&PORTA, &DDRA, send_pins[1], receive_muxes[0]);
-    uint8_t pressed3 = scan_pad(&PORTA, &DDRA, send_pins[2], receive_muxes[0]);
-    if (pressed1 || pressed2 || pressed3) {
+    put_char(&serial_port, MISO_SFT, 'y');
+    uint8_t pressed = 0;
+    pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
+    /*pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[1]);
+    pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[2]);
+    pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[3]);
+    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[0]);
+    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[1]);
+    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[2]);
+    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[3]);*/
+    if (pressed)
         set(PORTA, PIN_LED);
-    }
     else
         clear(PORTA, PIN_LED);
     // disconnect from MISO
@@ -93,15 +96,14 @@ int main(void)
     ADCSRB |= (1 << ADLAR);
 
     output(DDRA, PIN_LED);
-    set(PORTA, PIN_LED);
-    output(DDRA, MISO);
+    // set(PORTA, PIN_LED);
     
     while(1) {
-        static char chr;
+        /*static char chr;
         get_char(&serial_pins, MOSI, &chr);
-        if (chr == ADDRESS) {
+        if (chr == ADDRESS || 1) {*/
             // If we hear our name, it's our turn to talk back to the master.
             read_touchpads();
-        }
+        //}
     }
 }

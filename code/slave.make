@@ -12,6 +12,7 @@ CC=avr-gcc
 CFLAGS=-mmcu=$(MMCU) -Wall -Os -DF_CPU=$(F_CPU)
 
 all: $(HEX)
+	@echo -e "\n\033[0;31mMAKE SURE YOU UPDATED THE ADDRESS FOR THIS SLAVE\033[0m\n"
 
 $(HEX): $(OUT)
 	avr-objcopy -j .text -O ihex $(OUT) $(HEX)

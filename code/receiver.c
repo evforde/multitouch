@@ -12,7 +12,10 @@
 #define ADDRESS 0
 #define TIMEOUT_TIME 5000
 
-#define MAX_BUFFER 9
+#define NUM_STRINGS 3
+#define NUM_FRETS 2
+#define MAX_BUFFER 3 + NUM_STRINGS
+static unsigned char string_values[NUM_STRINGS] = {0};
 
 #define NUM_SLAVES 2
 static char slave_addresses[NUM_SLAVES] = {'a', 'b'};
@@ -46,7 +49,7 @@ void setup_timer(void) {
 void start_timer(void) {
     is_reading = 1;
     // TODO decrease prescaler
-    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 1024 prescaler
+    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 512 prescaler
 }
 
 void stop_timer(void) {
@@ -71,28 +74,42 @@ void read_from_board(void) {
     static char buffer[MAX_BUFFER] = {0};
     static int index = 0;
     get_char_interrupt(&serial_pins, MISO, &chr, &is_reading);
-    put_char_no_delay(&serial_port, serial_pin_out_sft, chr);
+    // TODO don't need to put out over serial
+    // put_char_no_delay(&serial_port, serial_pin_out_sft, chr);
     // Set up framing so 'h' is always first character
     if (chr == 'h' || index == MAX_BUFFER) {
         index = 0;
     }
     buffer[index++] = chr;
-    // Check for start pattern
-    if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'l' &&
-        buffer[3] == 'l' && buffer[4] == 'o' && index == 9) {
-        if (buffer[6])
-            set(PORTA, led_pins[0]);
-        else
-            clear(PORTA, led_pins[0]);
-        if (buffer[7])
-            set(PORTA, led_pins[1]);
-        else
-            clear(PORTA, led_pins[1]);
-        if (buffer[8])
-            set(PORTA, led_pins[2]);
-        else
-            clear(PORTA, led_pins[2]);
-        // read from the next board
+    // Check for start pattern and a full buffer
+    if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'y' &&
+            index == MAX_BUFFER) {
+        // TODO we never check that the address is the correct slave here
+        int string_index = 0;
+        for (string_index = 0; string_index < NUM_STRINGS; string_index++) {
+            // TODO update for multiple frets per slave board
+            if (buffer[3 + string_index]) {
+                set(string_values[string_index], slave_index);
+            }
+            else {
+                clear(string_values[string_index], slave_index);
+            }
+        }
+        for (string_index = 0; string_index < NUM_STRINGS; string_index++) {
+            // Again, for some reason I have to use switch statements here...
+            if (string_values[string_index])
+                switch (string_index) {
+                    case 0: set(PORTA, led_pins[0]); break;
+                    case 1: set(PORTA, led_pins[1]); break;
+                    case 2: set(PORTA, led_pins[2]); break;
+                }
+            else
+                switch (string_index) {
+                    case 0: clear(PORTA, led_pins[0]); break;
+                    case 1: clear(PORTA, led_pins[1]); break;
+                    case 2: clear(PORTA, led_pins[2]); break;
+                }
+        }
         stop_timer();
     }
 }
@@ -110,11 +127,12 @@ int main(void)
     // Initialize various special features
     serial_init(serial_pin_out_sft);
     output(DDRA, MOSI);
-    setup_leds();
-    setup_timer();
+    // setup_leds();
+    // setup_timer();
     
     put_char(&serial_port, serial_pin_out_sft, 'h');
     while(1) {
+        if (bit_test
         // tell somebody to talk
         // stupid C problems where real indexing doesn't work...
         switch (slave_index) {

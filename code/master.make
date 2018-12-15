@@ -5,8 +5,8 @@ OUT=$(PROJECT).obj
 SOURCES=receiver.c serial.c
 OBJECTS=$(SOURCES:.c=.o)
 
-MMCU=attiny44
-F_CPU=20000000
+MMCU=atmega328p
+F_CPU=16000000
 CC=avr-gcc
 
 CFLAGS=-mmcu=$(MMCU) -Wall -Os -DF_CPU=$(F_CPU)
