@@ -11,10 +11,15 @@
 #define ADDRESS 'b'
 #define TIMEOUT_TIME 5000
 
-static unsigned char send_pins[3] = {PB2, PA7};
+#define MISO PA5
+#define MISO_SFT (1 << MISO)
+#define MOSI PA6
+#define MOSI_SFT (1 << MOSI)
+
+static unsigned char send_pins[2] = {PA7, PB2};
 static unsigned char vals[3] = {0};
 // specify which pin to use as the ADC
-static unsigned char receive_muxes[1] = {0b00000000, 0b00000001, 0b00000010, 0b00000011};
+static unsigned char receive_muxes[4] = {0b00000000, 0b00000001, 0b00000010, 0b00000011};
 
 // TODO use MOSI interrupts so we always have updated touchpad readings
 unsigned char scan_pad(
@@ -47,8 +52,9 @@ unsigned char scan_pad(
     clear(PRR, PRADC);
     set(ADCSRA, ADSC);
     while (ADCSRA & (1 << ADSC));
-    unsigned char is_pressed = ADCH < 6;
-    put_char(&serial_port, MISO_SFT, is_pressed);
+    put_char(&PORTA, MISO_SFT, ADCH);
+    unsigned char is_pressed = ADCH < 15;
+    //put_char(&PORTA, MISO_SFT, is_pressed);
     
     clear(*sendport, sendpin);
     clear(*sendddr, sendpin);
@@ -58,6 +64,7 @@ unsigned char scan_pad(
     return is_pressed;
 }
 
+// TODO: is ADLAR on?
 void read_touchpads(void) {
     // connect to MISO
     set(PORTA, MISO);
@@ -65,18 +72,18 @@ void read_touchpads(void) {
     // read from the touchpads
     // Sometimes, the h goes back too fast, so delay for a little bit
     _delay_ms(10);
-    put_char(&serial_port, MISO_SFT, 'h');
-    put_char(&serial_port, MISO_SFT, 'e');
-    put_char(&serial_port, MISO_SFT, 'y');
+    put_char(&PORTA, MISO_SFT, 'h');
+    put_char(&PORTA, MISO_SFT, 'e');
+    put_char(&PORTA, MISO_SFT, 'y');
     uint8_t pressed = 0;
     pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]);
-    /*pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[1]);
+    pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[1]);
     pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[2]);
     pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[3]);
     pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[0]);
     pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[1]);
     pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[2]);
-    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[3]);*/
+    pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[3]);
     if (pressed)
         set(PORTA, PIN_LED);
     else

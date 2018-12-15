@@ -26,15 +26,6 @@
 
 #define max_buffer 25
 
-void serial_init(unsigned char serial_pin_out)
-{
-   //
-   // initialize output pins
-   //
-   set(serial_port, serial_pin_out);
-   output(serial_direction, serial_pin_out);
-}
-
 void put_char_no_delay(volatile unsigned char *port, unsigned char pin, char txchar) {
    // send character in txchar on port pin
    //    assumes line driver (inverts bits)
