@@ -9,7 +9,7 @@
 // TODO
 // TODO
 // TODO
-#define ADDRESS 'c'
+#define ADDRESS '\xe0'
 // TODO
 // TODO
 // TODO
@@ -25,6 +25,8 @@ static unsigned char send_pins[2] = {PA7, PB2};
 static unsigned char vals[3] = {0};
 // specify which pin to use as the ADC
 static unsigned char receive_muxes[4] = {0b00000000, 0b00000001, 0b00000010, 0b00000011};
+
+// TODO custom trigger values for each pad
 
 // TODO use MOSI interrupts so we always have updated touchpad readings
 unsigned char scan_pad(
@@ -63,16 +65,11 @@ unsigned char scan_pad(
 
     // Make receive pins outputs to quickly bleed off charge.
     set(DDRA, PA0);
-    // TODO: maybe raise this threshhold
-    unsigned char is_pressed = ADCH < 18;
-    // TODO: delay between readings to let charge bleed
+    unsigned char is_pressed = ADCH < 21;
     return is_pressed;
 }
 
 void read_touchpads(void) {
-    // connect to MISO
-    set(PORTA, MISO);
-    set(DDRA, MISO);
     // Pressed is an eight-bit representation of which pads are touched
     uint8_t pressed = 0;
     pressed |= scan_pad(&PORTA, &DDRA, send_pins[0], receive_muxes[0]) << 0;
@@ -84,8 +81,10 @@ void read_touchpads(void) {
     pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[2]) << 6;
     pressed |= scan_pad(&PORTB, &DDRB, send_pins[1], receive_muxes[3]) << 7;
     // TODO mess with delays
-    // TODO send back address?
     _delay_ms(10);
+    // connect to MISO
+    set(PORTA, MISO);
+    set(DDRA, MISO);
     put_char(&PORTA, MISO_SFT, 'h');
     put_char(&PORTA, MISO_SFT, pressed);
     if (pressed)

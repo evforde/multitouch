@@ -6,6 +6,7 @@
 #include "serial.h"
 #include "macros.h"
 
+#define BAUD 9600
 #define serial_pin_out PD1
 #define serial_pin_out_sft (1 << serial_pin_out)
 #define PIN_LED PB5
@@ -24,7 +25,7 @@
 static unsigned char string_values[NUM_STRINGS] = {0};
 
 #define NUM_SLAVES 3
-static char slave_addresses[NUM_SLAVES] = {'a', 'b', 'c'};
+static char slave_addresses[NUM_SLAVES] = {'\xe0', '\xe1', '\xe2'};
 static uint8_t slave_index = 0;
 
 
@@ -41,7 +42,7 @@ void setup_timer(void) {
 
 void start_timer(void) {
     is_reading = 1;
-    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 256 prescaler
+    TCCR1B |= (1 << CS11) | (1 << CS10); // 1 / 64 prescaler
 }
 
 void stop_timer(void) {
@@ -127,14 +128,12 @@ int main(void)
         slave_index = slave_index % NUM_SLAVES;
         if (slave_index == 0) {
             put_char(&PORTD, serial_pin_out_sft, 'h');
-            put_char(&PORTD, serial_pin_out_sft, 'e');
-            put_char(&PORTD, serial_pin_out_sft, 'y');
             put_char(&PORTD, serial_pin_out_sft, string_values[0]);
             put_char(&PORTD, serial_pin_out_sft, string_values[1]);
             put_char(&PORTD, serial_pin_out_sft, string_values[2]);
-            put_char(&PORTD, serial_pin_out_sft, string_values[3]);
+            put_char_no_delay(&PORTD, serial_pin_out_sft, string_values[3]);
         }
         // TODO remove delay perhaps
-        _delay_ms(10);
+        _delay_ms(1);
     }
 }

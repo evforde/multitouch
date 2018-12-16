@@ -1,8 +1,8 @@
-PROJECT=receiver
+PROJECT=master
 HEX=$(PROJECT).hex
 OUT=$(PROJECT).obj
 
-SOURCES=receiver.c serial.c
+SOURCES=master.c serial.c
 OBJECTS=$(SOURCES:.c=.o)
 
 MMCU=atmega328p
@@ -21,7 +21,7 @@ $(OUT): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(OUT) $(OBJECTS)
 
 # Dependency tree:
-receiver.c: serial.h macros.h
+master.c: serial.h macros.h
 serial.o: serial.c serial.h
 
 clean:

@@ -1,8 +1,8 @@
-PROJECT=multitouch
+PROJECT=slave
 HEX=$(PROJECT).hex
 OUT=$(PROJECT).obj
 
-SOURCES=multitouch.c serial.c
+SOURCES=slave.c serial.c
 OBJECTS=$(SOURCES:.c=.o)
 
 MMCU=attiny44
@@ -23,7 +23,7 @@ $(OUT): $(OBJECTS)
 
 
 # Dependency tree:
-multitouch.c: serial.h macros.h
+slave.c: serial.h macros.h
 serial.o: serial.c serial.h
 
 clean:
