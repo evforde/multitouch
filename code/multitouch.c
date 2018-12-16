@@ -7,8 +7,13 @@
 #include "macros.h"
 
 #define PIN_LED PA4
-//#define ADDRESS 'a'
-#define ADDRESS 'b'
+// TODO
+// TODO
+// TODO
+#define ADDRESS 'c'
+// TODO
+// TODO
+// TODO
 #define TIMEOUT_TIME 5000
 
 #define MISO PA5
@@ -52,9 +57,9 @@ unsigned char scan_pad(
     clear(PRR, PRADC);
     set(ADCSRA, ADSC);
     while (ADCSRA & (1 << ADSC));
-    put_char(&PORTA, MISO_SFT, ADCH);
-    unsigned char is_pressed = ADCH < 15;
-    //put_char(&PORTA, MISO_SFT, is_pressed);
+    //put_char(&PORTA, MISO_SFT, ADCH);
+    unsigned char is_pressed = ADCH < 20;
+    put_char(&PORTA, MISO_SFT, is_pressed);
     
     clear(*sendport, sendpin);
     clear(*sendddr, sendpin);
@@ -106,11 +111,11 @@ int main(void)
     // set(PORTA, PIN_LED);
     
     while(1) {
-        /*static char chr;
-        get_char(&serial_pins, MOSI, &chr);
-        if (chr == ADDRESS || 1) {*/
+        static char chr;
+        get_char(&PINA, MOSI, &chr);
+        if (chr == ADDRESS) {
             // If we hear our name, it's our turn to talk back to the master.
             read_touchpads();
-        //}
+        }
     }
 }

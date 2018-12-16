@@ -31,7 +31,7 @@ clean:
 ################################################################################
 
 program: programmed program-usbtiny
-	touch programmed
+	@echo "success!"
 
 fuse: fuse-usbtiny
 

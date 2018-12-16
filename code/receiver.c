@@ -17,13 +17,14 @@
 #define MOSI PB3
 #define MOSI_SFT (1 << MOSI)
 
-#define NUM_STRINGS 3
+#define NUM_STRINGS 4
 #define NUM_FRETS 2
-#define MAX_BUFFER 3 + NUM_STRINGS
+#define NUM_READINGS NUM_STRINGS * NUM_FRETS
+#define MAX_BUFFER 3 + NUM_READINGS
 static unsigned char string_values[NUM_STRINGS] = {0};
 
-#define NUM_SLAVES 2
-static char slave_addresses[NUM_SLAVES] = {'a', 'b'};
+#define NUM_SLAVES 3
+static char slave_addresses[NUM_SLAVES] = {'a', 'b', 'c'};
 static uint8_t slave_index = 0;
 
 
@@ -40,8 +41,7 @@ void setup_timer(void) {
 
 void start_timer(void) {
     is_reading = 1;
-    // TODO decrease prescaler
-    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 512 prescaler
+    TCCR1B |= (1 << CS12) | (0 << CS10); // 1 / 256 prescaler
 }
 
 void stop_timer(void) {
@@ -50,7 +50,7 @@ void stop_timer(void) {
     TCNT1 = 0;
 }
 
-ISR(TIM1_COMPA_vect) {
+ISR(TIMER1_COMPA_vect) {
     stop_timer();
 }
 
@@ -69,8 +69,7 @@ void read_from_board(void) {
     static char buffer[MAX_BUFFER] = {0};
     static int index = 0;
     get_char_interrupt(&PINB, MISO, &chr, &is_reading);
-    // TODO don't need to put out over serial
-    // put_char_no_delay(&serial_port, serial_pin_out_sft, chr);
+    // put_char_no_delay(&PORTD, serial_pin_out_sft, chr);
     // Set up framing so 'h' is always first character
     if (chr == 'h' || index == MAX_BUFFER) {
         index = 0;
@@ -80,13 +79,15 @@ void read_from_board(void) {
     if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'y' &&
             index == MAX_BUFFER) {
         // TODO we never check that the address is the correct slave here
-        int string_index = 0;
-        for (string_index = 0; string_index < NUM_STRINGS; string_index++) {
-            // TODO update for multiple frets per slave board
-            if (buffer[3 + string_index])
-                set(string_values[string_index], slave_index);
+        uint8_t reading_index = 0;
+        for (reading_index = 0; reading_index < NUM_READINGS; reading_index++) {
+            uint8_t string_index = reading_index % NUM_STRINGS;
+            uint8_t fret_index = slave_index * NUM_FRETS + (reading_index / NUM_STRINGS);
+            uint8_t val = buffer[3 + reading_index];
+            if (val)
+                set(string_values[string_index], fret_index);
             else
-                clear(string_values[string_index], slave_index);
+                clear(string_values[string_index], fret_index);
         }
         stop_timer();
     }
@@ -104,28 +105,21 @@ int main(void)
 
     // Initialize various special features
     serial_init();
-    // setup_timer();
+    setup_timer();
+    output(DDRB, PIN_LED);
     
     put_char(&PORTD, serial_pin_out_sft, 'h');
     while(1) {
-        if (bit_test(PINB, MISO))
-            set(PORTD, serial_pin_out);
-        else
-            clear(PORTD, serial_pin_out);
-        continue;
-        // tell somebody to talk
-        // stupid C problems where real indexing doesn't work...
-        switch (slave_index) {
-            case 0:
-                put_char(&PORTD, MOSI_SFT, slave_addresses[0]);
-                break;
-            case 1:
-                put_char(&PORTD, MOSI_SFT, slave_addresses[1]);
-                break;
-        }
         // show we're waiting
         set(PORTB, PIN_LED);
         start_timer();
+        // tell somebody to talk
+        // stupid C problems where real indexing doesn't work...
+        switch (slave_index) {
+            case 0: put_char(&PORTB, MOSI_SFT, slave_addresses[0]); break;
+            case 1: put_char(&PORTB, MOSI_SFT, slave_addresses[1]); break;
+            case 2: put_char(&PORTB, MOSI_SFT, slave_addresses[2]); break;
+        }
         // wait for board reading
         while (is_reading) {
             read_from_board();
@@ -133,6 +127,15 @@ int main(void)
         clear(PORTB, PIN_LED);
         slave_index++;
         slave_index = slave_index % NUM_SLAVES;
+        put_char(&PORTD, serial_pin_out_sft, 'h');
+        put_char(&PORTD, serial_pin_out_sft, 'e');
+        put_char(&PORTD, serial_pin_out_sft, 'y');
+        put_char(&PORTD, serial_pin_out_sft, string_values[0]);
+        put_char(&PORTD, serial_pin_out_sft, string_values[1]);
+        put_char(&PORTD, serial_pin_out_sft, string_values[2]);
+        put_char(&PORTD, serial_pin_out_sft, string_values[3]);
+        if (slave_index == 0);
+        // TODO remove delay perhaps
         _delay_ms(10);
     }
 }
