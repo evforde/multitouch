@@ -20,7 +20,7 @@
 #define NUM_STRINGS 4
 #define NUM_FRETS 2
 #define NUM_READINGS NUM_STRINGS * NUM_FRETS
-#define MAX_BUFFER 3 + NUM_READINGS
+#define MAX_BUFFER 2
 static unsigned char string_values[NUM_STRINGS] = {0};
 
 #define NUM_SLAVES 3
@@ -76,15 +76,13 @@ void read_from_board(void) {
     }
     buffer[index++] = chr;
     // Check for start pattern and a full buffer
-    if (buffer[0] == 'h' && buffer[1] == 'e' && buffer[2] == 'y' &&
-            index == MAX_BUFFER) {
-        // TODO we never check that the address is the correct slave here
+    if (buffer[0] == 'h' && index == MAX_BUFFER) {
+        uint8_t readings = buffer[1];
         uint8_t reading_index = 0;
         for (reading_index = 0; reading_index < NUM_READINGS; reading_index++) {
             uint8_t string_index = reading_index % NUM_STRINGS;
             uint8_t fret_index = slave_index * NUM_FRETS + (reading_index / NUM_STRINGS);
-            uint8_t val = buffer[3 + reading_index];
-            if (val)
+            if bit_test(readings, reading_index)
                 set(string_values[string_index], fret_index);
             else
                 clear(string_values[string_index], fret_index);
@@ -127,14 +125,15 @@ int main(void)
         clear(PORTB, PIN_LED);
         slave_index++;
         slave_index = slave_index % NUM_SLAVES;
-        put_char(&PORTD, serial_pin_out_sft, 'h');
-        put_char(&PORTD, serial_pin_out_sft, 'e');
-        put_char(&PORTD, serial_pin_out_sft, 'y');
-        put_char(&PORTD, serial_pin_out_sft, string_values[0]);
-        put_char(&PORTD, serial_pin_out_sft, string_values[1]);
-        put_char(&PORTD, serial_pin_out_sft, string_values[2]);
-        put_char(&PORTD, serial_pin_out_sft, string_values[3]);
-        if (slave_index == 0);
+        if (slave_index == 0) {
+            put_char(&PORTD, serial_pin_out_sft, 'h');
+            put_char(&PORTD, serial_pin_out_sft, 'e');
+            put_char(&PORTD, serial_pin_out_sft, 'y');
+            put_char(&PORTD, serial_pin_out_sft, string_values[0]);
+            put_char(&PORTD, serial_pin_out_sft, string_values[1]);
+            put_char(&PORTD, serial_pin_out_sft, string_values[2]);
+            put_char(&PORTD, serial_pin_out_sft, string_values[3]);
+        }
         // TODO remove delay perhaps
         _delay_ms(10);
     }
