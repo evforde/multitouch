@@ -34,15 +34,12 @@ PORT = 3000
 SOCKET.connect((HOST, PORT))
 NOTE_DELAY = 0.05
 
-def send(message, channel):
-    message = f"{channel} {message} 1;"
+def send(message):
+    message = f"{message};"
     SOCKET.send(message.encode("utf-8"))
 
 def play_chord(*notes):
-    for i in range(len(notes) - 1):
-        send(notes[i], i)
-        time.sleep(NOTE_DELAY)
-    send(notes[-1], len(notes) - 1)
+    send(" ".join(notes))
 
 def reverse(string):
     return "".join(reversed(string))
@@ -58,13 +55,13 @@ while True:
         except:
             buf.append(byte)
         # look for "h" delimiter
-        if len(buf) > 1 and buf[-1] == "h":
-            hello = buf[-1:]
-            readings = buf[:-1]
+        if len(buf) == 5 and buf[0] == "h":
+            hello = buf[1:]
+            readings = buf[1:]
             binary = ["1" + reverse(format(ord(c), '#008b')[2:]) for c in readings]
             print(binary)
             fret_numbers = [c.rindex("1") for c in binary]
-            notes = [fret + base for fret, base in zip(fret_numbers, base_notes)]
+            notes = [str(fret + base) for fret, base in zip(fret_numbers, base_notes)]
             print(notes)
             buf = []
             play_chord(*notes)
