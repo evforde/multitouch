@@ -70,29 +70,20 @@ void serial_init() {
 
 void read_from_board(void) {
     static char chr;
-    static char buffer[MAX_BUFFER] = {0};
     static int index = 0;
     get_char_interrupt(&PINB, MISO, &chr, &is_reading);
     // put_char_no_delay(&PORTD, serial_pin_out_sft, chr);
-    // Set up framing so 'h' is always first character
-    if (chr == 'h' || index == MAX_BUFFER) {
-        index = 0;
+    uint8_t readings = chr;
+    uint8_t reading_index = 0;
+    for (reading_index = 0; reading_index < NUM_READINGS; reading_index++) {
+        uint8_t string_index = reading_index % NUM_STRINGS;
+        uint8_t fret_index = slave_index * NUM_FRETS + (reading_index / NUM_STRINGS);
+        if bit_test(readings, reading_index)
+            set(string_values[string_index], fret_index);
+        else
+            clear(string_values[string_index], fret_index);
     }
-    buffer[index++] = chr;
-    // Check for start pattern and a full buffer
-    if (buffer[0] == 'h' && index == MAX_BUFFER) {
-        uint8_t readings = buffer[1];
-        uint8_t reading_index = 0;
-        for (reading_index = 0; reading_index < NUM_READINGS; reading_index++) {
-            uint8_t string_index = reading_index % NUM_STRINGS;
-            uint8_t fret_index = slave_index * NUM_FRETS + (reading_index / NUM_STRINGS);
-            if bit_test(readings, reading_index)
-                set(string_values[string_index], fret_index);
-            else
-                clear(string_values[string_index], fret_index);
-        }
-        stop_timer();
-    }
+    stop_timer();
 }
 
 void get_notes(void) {
