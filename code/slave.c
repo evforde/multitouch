@@ -1,5 +1,3 @@
-// TODO custom trigger values for each pad
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -10,7 +8,7 @@
 #include "multitouch.h"
 
 // TODO
-#define ADDRESS '\xe1'
+#define ADDRESS '\xe2'
 // TODO
 
 #define PIN_LED PA4
@@ -52,11 +50,11 @@ void read_touchpads(void) {
     pressed_pads |= scan_pad(&PORTB, &DDRB, send_pins[1], &rx_input, &rx_output, receive_muxes[3], 21) << 7;
     pressed_pads |= scan_pad(&PORTB, &DDRB, send_pins[1], &rx_input, &rx_output, receive_muxes[0], 21) << 4;
     pressed_pads |= scan_pad(&PORTB, &DDRB, send_pins[1], &rx_input, &rx_output, receive_muxes[2], 21) << 6;
+    last_pressed_pads = pressed_pads;
     if (pressed_pads)
         set(PORTA, PIN_LED);
     else
         clear(PORTA, PIN_LED);
-    last_pressed_pads = pressed_pads;
     needs_update = 0;
     return;
 }
@@ -75,15 +73,16 @@ ISR(PCINT0_vect) {
     if (chr == ADDRESS) {
         // give the master board a bit of time
         set(PORTA, PIN_LED);
-        _delay_ms(40);
+        _delay_ms(30);
         clear(PORTA, PIN_LED);
         _delay_ms(10);
         // connect to MISO
         set(PORTA, MISO);
         set(DDRA, MISO);
         // output the state of the touchpads
-        put_char(&PORTA, MISO_SFT, 'h');
-        put_char(&PORTA, MISO_SFT, last_pressed_pads);
+        put_char_no_delay(&PORTA, MISO_SFT, 'h');
+        _delay_ms(5);
+        put_char_no_delay(&PORTA, MISO_SFT, last_pressed_pads);
         needs_update = 1;
         // disconnect from MISO
         clear(DDRA, MISO);

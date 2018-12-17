@@ -16,12 +16,14 @@ unsigned char scan_pad(
     ADMUX = muxval;
     
     int temp_value = 100;
-    while (temp_value > 10) {
+    int num_counts = 0;
+    while (temp_value > 10 && num_counts < 100000) {
         clear(PRR, PRADC);
         set(ADCSRA, ADSC);
         while (ADCSRA & (1 << ADSC));
         temp_value = ADCL;
         temp_value += ADCH << 8;
+        num_counts++;
     }
 
     // Make receive pins inputs

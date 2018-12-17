@@ -44,8 +44,8 @@ void setup_timer(void) {
 
 void start_timer(void) {
     is_reading = 1;
-    // TCCR1B |= (1 << CS11) | (1 << CS10); // 1 / 64 prescaler
-    TCCR1B |= (1 << CS12); // 1 / 256 prescaler
+    TCCR1B |= (1 << CS11) | (1 << CS10); // 1 / 64 prescaler
+    // TCCR1B |= (1 << CS12); // 1 / 256 prescaler
 }
 
 void stop_timer(void) {
@@ -96,22 +96,21 @@ void read_from_board(void) {
 }
 
 void get_notes(void) {
-    // show we're waiting
     for (slave_index = 0; slave_index < 3; slave_index++) {
         start_timer();
+        // show we're waiting
         set(PORTB, PIN_LED);
         // tell somebody to talk
         // stupid problem where real indexing doesn't work...
         switch (slave_index) {
-            case 0: put_char(&PORTB, MOSI_SFT, slave_addresses[0]); break;
-            case 1: put_char(&PORTB, MOSI_SFT, slave_addresses[1]); break;
-            case 2: put_char(&PORTB, MOSI_SFT, slave_addresses[2]); break;
+            case 0: put_char_no_delay(&PORTB, MOSI_SFT, slave_addresses[0]); break;
+            case 1: put_char_no_delay(&PORTB, MOSI_SFT, slave_addresses[1]); break;
+            case 2: put_char_no_delay(&PORTB, MOSI_SFT, slave_addresses[2]); break;
         }
         // wait for board reading
         while (is_reading)
             read_from_board();
         clear(PORTB, PIN_LED);
-        _delay_ms(10);
     }
     // Send the state of all strings to the computer
     put_char(&PORTD, serial_pin_out_sft, 'h');
