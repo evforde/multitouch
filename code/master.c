@@ -103,12 +103,6 @@ void get_notes(void) {
             read_from_board();
         clear(PORTB, PIN_LED);
     }
-    // Send the state of all strings to the computer
-    put_char(&PORTD, serial_pin_out_sft, 'h');
-    put_char(&PORTD, serial_pin_out_sft, string_values[0]);
-    put_char(&PORTD, serial_pin_out_sft, string_values[1]);
-    put_char(&PORTD, serial_pin_out_sft, string_values[2]);
-    put_char_no_delay(&PORTD, serial_pin_out_sft, string_values[3]);
 }
 
 // ----------------------------------------------------------------------------
@@ -125,8 +119,16 @@ void read_strum_touchpads(void) {
     strummed |= scan_pad(&PORTC, &DDRC, send_pins[1], &noop, &noop, receive_muxes[0], 28) << 1;
     strummed |= scan_pad(&PORTC, &DDRC, send_pins[1], &noop, &noop, receive_muxes[1], 26) << 0;
     // If any string is hit, ask the other boards what notes are held down
-    if (strummed)
+    if (strummed) {
         get_notes();
+        // Send the state of all strings to the computer
+        put_char(&PORTD, serial_pin_out_sft, 'h');
+        put_char(&PORTD, serial_pin_out_sft, string_values[0]);
+        put_char(&PORTD, serial_pin_out_sft, string_values[1]);
+        put_char(&PORTD, serial_pin_out_sft, string_values[2]);
+        put_char_no_delay(&PORTD, serial_pin_out_sft, string_values[3]);
+        _delay_ms(50);
+    }
 }
 
 // ----------------------------------------------------------------------------
