@@ -2,7 +2,7 @@ PROJECT=master
 HEX=$(PROJECT).hex
 OUT=$(PROJECT).obj
 
-SOURCES=master.c serial.c
+SOURCES=master.c serial.c multitouch.c
 OBJECTS=$(SOURCES:.c=.o)
 
 MMCU=atmega328p
@@ -21,8 +21,9 @@ $(OUT): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(OUT) $(OBJECTS)
 
 # Dependency tree:
-master.c: serial.h macros.h
+master.c: serial.h macros.h multitouch.h
 serial.o: serial.c serial.h
+multitouch.o: multitouch.c multitouch.h
 
 clean:
 	rm *.o *.hex

@@ -84,158 +84,82 @@ void put_char(volatile unsigned char *port, unsigned char pin, char txchar) {
     char_delay();
 }
 
+static inline void read_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
+    // delay to middle of first data bit
+    half_bit_delay();
+    bit_delay();
+    // unrolled loop to read data bits
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 0);
+    else
+        *rxbyte |= (0 << 0);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 1);
+    else
+        *rxbyte |= (0 << 1);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 2);
+    else
+        *rxbyte |= (0 << 2);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 3);
+    else
+        *rxbyte |= (0 << 3);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 4);
+    else
+        *rxbyte |= (0 << 4);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 5);
+    else
+        *rxbyte |= (0 << 5);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 6);
+    else
+        *rxbyte |= (0 << 6);
+    bit_delay();
+    if bit_test(*pins,pin)
+        *rxbyte |= (1 << 7);
+    else
+        *rxbyte |= (0 << 7);
+    // wait for stop bit
+    bit_delay();
+    half_bit_delay();
+}
+
 void get_char(volatile unsigned char *pins, unsigned char pin, char *rxbyte) {
-   // read character into rxbyte on pins pin
-   //    assumes line driver (inverts bits)
-   *rxbyte = 0;
-   while (bit_test(*pins,pin))
-      // wait for start bit
-      ;
-   // delay to middle of first data bit
-   half_bit_delay();
-   bit_delay();
-   // unrolled loop to read data bits
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 0);
-   else
-      *rxbyte |= (0 << 0);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 1);
-   else
-      *rxbyte |= (0 << 1);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 2);
-   else
-      *rxbyte |= (0 << 2);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 3);
-   else
-      *rxbyte |= (0 << 3);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 4);
-   else
-      *rxbyte |= (0 << 4);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 5);
-   else
-      *rxbyte |= (0 << 5);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 6);
-   else
-      *rxbyte |= (0 << 6);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 7);
-   else
-      *rxbyte |= (0 << 7);
-   // wait for stop bit
-   bit_delay();
-   half_bit_delay();
+    // assumes line driver (inverts bits)
+    *rxbyte = 0;
+    while (bit_test(*pins,pin)) // wait for start bit
+        ;
+    read_char(pins, pin, rxbyte);
 }
 
-// TODO
+void get_char_timeout(volatile unsigned char *pins, unsigned char pin, char *rxbyte, uint32_t timeout) {
+    // assumes line driver (inverts bits)
+    *rxbyte = 0;
+    uint32_t count = 0;
+    while (bit_test(*pins,pin)) {
+        // wait for start bit unless we time out
+        count++;
+        if (count > timeout)
+            return;
+    }
+    read_char(pins, pin, rxbyte);
+}
+
 void get_char_interrupt(volatile unsigned char *pins, unsigned char pin, char* rxbyte, unsigned char* interrupt) {
-   // read character into rxbyte on pins pin
-   //    assumes line driver (inverts bits)
-   *rxbyte = 0;
-   while (bit_test(*pins,pin) && *interrupt)
-      // wait for start bit
-      ;
-   // delay to middle of first data bit
-   half_bit_delay();
-   bit_delay();
-   // unrolled loop to read data bits
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 0);
-   else
-      *rxbyte |= (0 << 0);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 1);
-   else
-      *rxbyte |= (0 << 1);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 2);
-   else
-      *rxbyte |= (0 << 2);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 3);
-   else
-      *rxbyte |= (0 << 3);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 4);
-   else
-      *rxbyte |= (0 << 4);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 5);
-   else
-      *rxbyte |= (0 << 5);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 6);
-   else
-      *rxbyte |= (0 << 6);
-   bit_delay();
-   if bit_test(*pins,pin)
-      *rxbyte |= (1 << 7);
-   else
-      *rxbyte |= (0 << 7);
-   // wait for stop bit
-   bit_delay();
-   half_bit_delay();
+    // assumes line driver (inverts bits)
+    *rxbyte = 0;
+    while (bit_test(*pins,pin))
+        // wait for start bit unless there's an interrupt
+        if (!*interrupt)
+            return;
+    read_char(pins, pin, rxbyte);
 }
-
-void put_int(volatile unsigned char *port, unsigned char pin, int x) {
-
-    if (x == 0) {
-        put_char(port, pin, '0');
-        return;
-    }
-      
-    
-    // Loop until we exceed the value to be printed
-    int index = 1;
-    for (index = 1; index <= x; index *= 10);
-  
-    while(index > 1) {
-         index /= 10;
-         put_char(port, pin, '0' + x / index);
-         x = x % index;
-    }
-}
-
-void put_flash_string(volatile unsigned char *port, unsigned char pin, PGM_P str) {
-   //
-   // print a null-terminated string from flash
-   //
-   static char chr;
-   static int index;
-   index = 0;
-   do {
-      chr = pgm_read_byte(&(str[index]));
-      put_char(port, pin, chr);
-      ++index;
-      } while (chr != 0);
-   }
-
-void put_ram_string(volatile unsigned char *port, unsigned char pin, char *str) {
-   //
-   // print a null-terminated string from SRAM
-   //
-   static int index;
-   index = 0;
-   do {
-      put_char(port, pin, str[index]);
-      ++index;
-      } while (str[index] != 0);
-   }
