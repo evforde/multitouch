@@ -1,0 +1,21 @@
+#N canvas 0 23 1680 1005 16;
+#X obj 293 132 inlet;
+#X obj 293 160 unpack f f f f;
+#X obj 386 370 *~;
+#X obj 416 315 vline~;
+#X obj 386 399 throw~ out;
+#X text 184 221 midi note;
+#X text 422 195 amplitude;
+#X msg 416 274 \$1 1;
+#X obj 293 316 readnote~;
+#X text 300 43 reads midi note numbers at high rate \, but samples
+them every few milliseconds;
+#X obj 416 243 sqrt;
+#X connect 0 0 1 0;
+#X connect 1 0 8 0;
+#X connect 1 1 10 0;
+#X connect 2 0 4 0;
+#X connect 3 0 2 1;
+#X connect 7 0 3 0;
+#X connect 8 0 2 0;
+#X connect 10 0 7 0;
